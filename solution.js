@@ -28,7 +28,7 @@ const solve = (anagram) => {
 
     const isValid = lineArr.every(l => chars[l] && (letterChars[l] <= chars[l]))
     if (isValid) {
-      foundWords.push(lineArr)
+      foundWords.push(lineArr.join(''))
     }
   }).on('close', () => {
     const wordList = [...new Set(foundWords.map(w => JSON.stringify(w)))].map(w => JSON.parse(w))
@@ -43,44 +43,80 @@ const solve = (anagram) => {
   })
 }
 
+function getChars(obj, word) {
+  for (let l of word) {
+    obj[l] = (obj[l] || 0) + 1
+  }
+  return obj
+}
+
+function checkChars([char, count]) {
+  return this[char] === count 
+}
+
 function* permutation(arr, size, chars) {
   let len = arr.length
   let data = []
-  let indecesUsed = []
-  let anagramChars = {...chars}
-  let arrChars = {}
-  let isValid = true
+  let used = []
+  let charEntries = Object.entries(chars)
+  let anagramLength = Object.values(chars).reduce((a, c) => a + c)
+  // let anagramChars = {...chars}
+  // let arrChars = {}
+  // let isValid = true
+  console.time("permutation")
   yield* permutationUtil(0)
-
-  function* permutationUtil(index) {
+  
+  function* permutationUtil(index, dataLen = 0) {
     if (index === size) {
-      if (Object.values(anagramChars).every(x => !x))
-      // if(Object.entries(chars).every(([char, count]) => anagramChars[char] === count))
-        return yield data.map(d => d.join('')).join(' ')
-      else return
+      if (anagramLength === dataLen) {
+        let dataChars = data.reduce(getChars, {})
+        let isValid = charEntries.every(checkChars.bind(dataChars))
+        if (isValid) {
+          console.timeEnd("permutation")
+          console.time("permutation")
+          return yield data.join(' ')
+        }
+      }
+      return
     }
 
     for (let i = 0; i < len; i++) {
-      if (!indecesUsed[i]) {
+      if (!used[i]) {
 
-        arrChars = arr[i].reduce((obj, char) => {
-          obj[char] = (obj[char] || 0) + 1
-          return obj
-        }, {})
+        // arrChars = {}
+        // isValid = true
+        // let word = arr[i]
+        // for (let char of word) {
+        //   if (anagramChars[char]) {
+        //     arrChars[char] = (arrChars[char] || 0) + 1
+        //     anagramChars[char]--
+        //   }
+        //   else {
+        //     let entries = Object.entries(arrChars)
+        //     if(entries.length > 0)
+        //       entries.forEach(([char, count]) => anagramChars[char] += count)
+        //     isValid = false
+        //     break
+        //   }
+        // }
 
-        let charEntires = Object.entries(arrChars)
+        // arrChars = arr[i].reduce((obj, char) => {
+        //   obj[char] = (obj[char] || 0) + 1
+        //   return obj
+        // }, {})
 
-        isValid = charEntires.every(([char, count]) => anagramChars[char] > 0 && anagramChars[char] >= count)
-        if (!isValid) continue
+        // let charEntires = Object.entries(arrChars)
 
-        indecesUsed[i] = true
-        charEntires.forEach(([char, count]) => anagramChars[char] -= count)
+        // isValid = charEntires.every(([char, count]) => anagramChars[char] > 0 && anagramChars[char] >= count)
+        // if (!isValid) continue
 
-        // data[index].forEach(c => anagramChars[c]++)     
+        used[i] = true
+        // charEntires.forEach(([char, count]) => anagramChars[char] -= count)
+
         data[index] = arr[i]
-        yield* permutationUtil(index + 1)
-        indecesUsed[i] = false
-        charEntires.forEach(([char, count]) => anagramChars[char] += count)
+        yield* permutationUtil(index + 1, dataLen + data[index].length)
+        used[i] = false
+        // charEntires.forEach(([char, count]) => anagramChars[char] += count)
       }
     }
   }
