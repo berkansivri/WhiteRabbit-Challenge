@@ -22,7 +22,7 @@ const main = (fileName, anagram) => {
   const foundWords = []
 
   lineReader.on('line', line => {
-      if (checkCharCounts.call({}, line))
+      if (checkCharCounts(line))
         foundWords.push(line)
     })
     .on('close', () => {
@@ -40,26 +40,60 @@ function getCharsOfAnagram(anagram) {
   return Object.freeze(obj)
 }
 
-function checkCharCounts(word) {
+function checkCharCounts2(word, chars) {
+  let obj = { ...chars }
   for (let c of word) {
-    this[c] = (this[c] || 0) + 1
-    if (!(this[c] <= anagramChars[c]))
+    obj[c] = (obj[c] || 0) + 1
+    if (!(obj[c] <= anagramChars[c]))
       return false
   }
   return true
 }
 
+function checkCharCounts3(word) {
+  let t = 0
+  for (let c of word) {
+    if (anagramChars[c]) {
+      t = (this[c] || 0) + 1
+      if (t <= anagramChars[c])
+        this[c] = t
+      else
+        return false
+    } else
+      return false
+  }
+  return true
+}
+
+function checkCharCounts(word, chars = {}) {
+  let obj = {
+      ...chars
+    },
+    t = 0
+  for (let c of word) {
+    if (anagramChars[c]) {
+      t = (obj[c] || 0) + 1
+      if (t <= anagramChars[c])
+        obj[c] = t
+      else
+        return false
+    } else
+      return false
+  }
+  Object.assign(chars, obj)
+  return true
+}
+
 function findPhrases(wordList) {
-  let size = 1
+  let size = 3
 
   while (hashValues.length > 0) {
 
     console.log(`--- Checking with ${size} word ---`)
-    for (let words of permutation(wordList, size)) {
-
+    for (let words of tryy(wordList, size)) {
       const md5String = MD5(words).toString()
       const index = hashValues.indexOf(md5String)
-  
+
       if (index > -1) {
         showResult(hashValues[index], words)
         hashValues.splice(index, 1)
@@ -69,41 +103,62 @@ function findPhrases(wordList) {
   }
 }
 
+function removeCharCounts(word, chars) {
+  for (let c of word) {
+    chars[c] && chars[c]--
+  }
+}
 
-function* permutation(arr, size) {
-  const datasetLen = arr.length,
-    data = [],
-    used = [],
+function* tryy(arr, size) {
+  const phrase = new Array(size).fill(''),
     anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
-  let isValid = true
-  yield* permute(0)
+  let filteredArr = [],
+    len = 0,
+    chars = {}
 
-  function* permute(index, len = 0) {
-    if (index === size) {
-      if (isValid)
-        return yield data.join(' ')
-      else
-        return
+  for (let i = 0; i < arr.length; i++) {
+    if (!checkCharCounts(arr[i], chars)) continue
+    phrase[0] = arr[i]
+
+    for (let j = i; j < arr.length; j++) {
+      if (!checkCharCounts(arr[j], chars)) continue
+      phrase[1] = arr[j]
+      len = Object.values(chars).reduce((a,c) => a + c)
+
+      filteredArr = arr.filter(word => {
+        if (word.length === (anagramLength - len))
+          if (checkCharCounts2(word, chars))
+            return true
+        return false
+      })
+
+      for (let k = 0; k < filteredArr.length; k++) {
+        phrase[2] = filteredArr[k]
+        yield* permutation(phrase)
+      }
+      removeCharCounts(phrase[1], chars)
+      phrase[1] = ""
     }
+    chars = {}
+  }
+}
 
-    for (let i = 0; i < datasetLen; i++) {
+
+function* permutation(arr, size = arr.length) {
+  const data = [],
+    used = [],
+    len = arr.length
+  yield* permutationUtil(0)
+
+  function* permutationUtil(index) {
+    if (index === size) {
+      return yield data.join(' ')
+    }
+    for (let i = 0; i < len; i++) {
       if (!used[i]) {
-        isValid = true
-        const wordLength = len + arr[i].length
-
-        if ((wordLength === anagramLength)) {
-          let tempData = [...data]
-          tempData[index] = arr[i]
-          isValid = tempData.every(checkCharCounts.bind({}))
-
-          if (!isValid)
-            continue
-        } else
-          isValid = false
-        
         used[i] = true
         data[index] = arr[i]
-        yield* permute(index + 1, wordLength)
+        yield* permutationUtil(index + 1)
         used[i] = false
       }
     }
