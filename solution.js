@@ -22,7 +22,7 @@ const main = (fileName, anagram) => {
   const foundWords = []
 
   lineReader.on('line', line => {
-      if (checkCharCounts(line))
+      if (isValidWord(line))
         foundWords.push(line)
     })
     .on('close', () => {
@@ -40,48 +40,28 @@ function getCharsOfAnagram(anagram) {
   return Object.freeze(obj)
 }
 
-function checkCharCounts2(word, chars) {
+function isValidWord(word, chars = {}) {
+  for (let c of word) {
+    chars[c] = (chars[c] || 0) + 1
+    if (!(chars[c] <= anagramChars[c]))
+      return false
+  }
+  return true
+}
+
+function addCharCounts(word, chars = {}) {
   let obj = { ...chars }
-  for (let c of word) {
-    obj[c] = (obj[c] || 0) + 1
-    if (!(obj[c] <= anagramChars[c]))
-      return false
+  if (isValidWord(word, obj)) {
+    Object.assign(chars, obj)
+    return true
   }
-  return true
+  return false
 }
 
-function checkCharCounts3(word) {
-  let t = 0
+function removeCharCounts(word, chars) {
   for (let c of word) {
-    if (anagramChars[c]) {
-      t = (this[c] || 0) + 1
-      if (t <= anagramChars[c])
-        this[c] = t
-      else
-        return false
-    } else
-      return false
+    chars[c] && chars[c]--
   }
-  return true
-}
-
-function checkCharCounts(word, chars = {}) {
-  let obj = {
-      ...chars
-    },
-    t = 0
-  for (let c of word) {
-    if (anagramChars[c]) {
-      t = (obj[c] || 0) + 1
-      if (t <= anagramChars[c])
-        obj[c] = t
-      else
-        return false
-    } else
-      return false
-  }
-  Object.assign(chars, obj)
-  return true
 }
 
 function findPhrases(wordList) {
@@ -90,7 +70,7 @@ function findPhrases(wordList) {
   while (hashValues.length > 0) {
 
     console.log(`--- Checking with ${size} word ---`)
-    for (let words of tryy(wordList, size)) {
+    for (let words of listFilter(wordList, size)) {
       const md5String = MD5(words).toString()
       const index = hashValues.indexOf(md5String)
 
@@ -103,31 +83,25 @@ function findPhrases(wordList) {
   }
 }
 
-function removeCharCounts(word, chars) {
-  for (let c of word) {
-    chars[c] && chars[c]--
-  }
-}
-
-function* tryy(arr, size) {
+function* listFilter(arr, size) {
   const phrase = new Array(size).fill(''),
     anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
   let filteredArr = [],
-    len = 0,
-    chars = {}
+    chars = {},
+    len = 0
 
   for (let i = 0; i < arr.length; i++) {
-    if (!checkCharCounts(arr[i], chars)) continue
+    if (!addCharCounts(arr[i], chars)) continue
     phrase[0] = arr[i]
 
     for (let j = i; j < arr.length; j++) {
-      if (!checkCharCounts(arr[j], chars)) continue
+      if (!addCharCounts(arr[j], chars)) continue
       phrase[1] = arr[j]
-      len = Object.values(chars).reduce((a,c) => a + c)
 
+      len = Object.values(chars).reduce((a, c) => a + c)
       filteredArr = arr.filter(word => {
         if (word.length === (anagramLength - len))
-          if (checkCharCounts2(word, chars))
+          if (isValidWord(word, { ...chars }))
             return true
         return false
       })
@@ -151,9 +125,9 @@ function* permutation(arr, size = arr.length) {
   yield* permutationUtil(0)
 
   function* permutationUtil(index) {
-    if (index === size) {
+    if (index === size)
       return yield data.join(' ')
-    }
+
     for (let i = 0; i < len; i++) {
       if (!used[i]) {
         used[i] = true
