@@ -1,8 +1,10 @@
-const MD5 = require('crypto-js/md5')
-
+//    Challenge link: https://followthewhiterabbit.trustpilot.com/cs/step3.html
 //    Easy secret phrase: printout stout yawls
 //    Medium secret phrase: ty outlaws printouts
 //    Hard secret phrase: wu lisp not statutory
+
+
+const MD5 = require('md5')
 
 const hashValues = [
   "e4820b45d2277f3844eac66c903e84be", // Easy
