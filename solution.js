@@ -9,8 +9,8 @@ const MD5 = require('md5')
 const hashValues = [
   "e4820b45d2277f3844eac66c903e84be", // Easy
   "23170acc097c24edb98fc5488ab033fe", // Medium
-  "4624d200580677270a54ccff86b9610e", // From web //
-  "665e5bcb0c20062fe8abaaf4628bb154", // Hard
+  "665e5bcb0c20062fe8abaaf4628bb154", // Hard,
+  "96ec6e6479abf6421446b34b4954ff10" // dublicate 
 ]
 let anagramChars = {}
 
@@ -43,7 +43,14 @@ function getCharsOfAnagram(anagram) {
   return Object.freeze(obj)
 }
 
-function isValidWord(word, chars = {}) {
+// function* getChars(word, chars) {
+//   for (let c of chars) {
+//     chars[c] = (chars[c] || 0) + 1
+//     yield chars
+//   }
+// }
+
+function isValidWord(word = "", chars = {}) {
   for (let c of word) {
     chars[c] = (chars[c] || 0) + 1
     if (!(chars[c] <= anagramChars[c]))
@@ -52,7 +59,7 @@ function isValidWord(word, chars = {}) {
   return true
 }
 
-function addCharCounts(word, chars = {}) {
+function addCharCounts(word = "", chars = {}) {
   let obj = { ...chars }
   if (isValidWord(word, obj)) {
     Object.assign(chars, obj)
@@ -61,123 +68,117 @@ function addCharCounts(word, chars = {}) {
   return false
 }
 
-function removeCharCounts(word, chars) {
-  for (let c of word || "") {
+function removeCharCounts(word = "", chars = {}) {
+  for (let c of word) {
     chars[c] && chars[c]--
   }
 }
 
 function findPhrases(wordList) {
-
+  let wordCount = 1
   while (hashValues.length > 0) {
-    for (let words of listFilter(wordList)) {
-      const md5String = MD5(words).toString()
+
+    console.log(`--------- Checking with ${wordCount} word combination --------`)
+    console.log(`===================================================`)
+    
+    for (let phrase of listFilter(wordList, wordCount)) {
+      const md5String = MD5(phrase).toString()
       const index = hashValues.indexOf(md5String)
 
       if (index > -1) {
-        showResult(hashValues[index], words)
+        showResult(hashValues[index], phrase)
         hashValues.splice(index, 1)
       }
     }
+    wordCount++
   }
 }
 
-function* listFilter2(arr, size) {
-  const phrase = []
-  anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
-  let filteredArr = [],
-    chars = {},
-    len = 0
-
-  for (let i = 0; i < arr.length; i++) {
-    if (!addCharCounts(arr[i], chars)) continue
-    phrase[0] = arr[i]
-
-    for (let j = i; j < arr.length; j++) {
-      if (!addCharCounts(arr[j], chars)) continue
-      phrase[1] = arr[j]
-
-      len = Object.values(chars).reduce((a, c) => a + c)
-      filteredArr = arr.filter(word => {
-        if (word.length === (anagramLength - len))
-          if (isValidWord(word, { ...chars }))
-            return true
-        return false
-      })
-
-      for (let k = 0; k < filteredArr.length; k++) {
-        phrase[2] = filteredArr[k]
-        yield* permutation(phrase)
-      }
-      removeCharCounts(phrase[1], chars)
-      phrase[1] = ""
-    }
-    chars = {}
-  }
-}
-
-function* listFilter(arr) {
-  let phrase = []
+function* listFilter(wordList, wordCount) {
+  const phrase = [],
     anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
   let filteredArr,
-    chars = {},
-    len = 0,
-    wordCount = 1
+    suitableLength,
+    chars = {}
 
-  function* fn(index) {
+  function* fn(index)   {
     if (index === wordCount - 1) {
-      len = Object.values(chars).reduce((a, c) => a + c, 0)
-      filteredArr = arr.filter(word => word.length === (anagramLength - len) && isValidWord(word, { ...chars }))
+
+      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0)
+      let copyChars = { ...chars }
+      filteredArr = wordList.filter(word => word.length === suitableLength && isValidWord(word, { ...chars }))
+
       if(filteredArr.length > 0) {
-        for (let k = 0; k < filteredArr.length; k++) {
-          phrase[index] = filteredArr[k]
+        for (let j = 0; j < filteredArr.length; j++) {
+          phrase[index] = filteredArr[j]
           return yield* permutation(phrase)
         }
       }
-      return
+
+    } else {
+
+      for (let i = 0; i < wordList.length; i++) {
+        if(phrase[index]) {
+          removeCharCounts(phrase[index], chars)
+        }
+        phrase[index] = ""
+        if (!addCharCounts(wordList[i], chars)) continue
+        phrase[index] = wordList[i]
+        yield* fn(index + 1)
+      }
     }
-
-    for (let i = 0; i < arr.length; i++) {
-      removeCharCounts(phrase[index], chars)
-      phrase[index] = ""
-      if (!addCharCounts(arr[i], chars)) continue
-      phrase[index] = arr[i]
-      yield* fn(index + 1)
-    }
-  }
-
-  for (; wordCount <= arr.length; wordCount++) {
-    console.log(`--- Checking with ${wordCount} word ---`)
-    yield* fn(0)
-  }
-
+  } 
+  yield* fn(0)
 }
 
 
-function* permutation(arr, size = arr.length) {
-  const data = [],
-    used = [],
-    len = arr.length
-  yield* perm(0)
+// function* permutation(arr, size = arr.length) {
+//   const data = [],
+//     used = [],
+//     len = arr.length
+//   yield* perm(0)
 
-  function* perm(index) {
-    if (index === size)
-      return yield data.join(' ')
+//   function* perm(index) {
+//     if (index === size)
+//       return yield data.join(' ')
 
-    for (let i = 0; i < len; i++) {
-      if (!used[i]) {
-        used[i] = true
-        data[index] = arr[i]
-        yield* perm(index + 1)
-        used[i] = false
-      }
+//     for (let i = 0; i < len; i++) {
+//       if (!used[i]) {
+//         used[i] = true
+//         data[index] = arr[i]
+//         yield* perm(index + 1)
+//         used[i] = false
+//       }
+//     }
+//   }
+// }
+
+function* permutation(arr) {
+  let size = arr.length
+  yield* heapsUtil(0)
+  function* heapsUtil(index) {
+    if (index === size) {
+      return yield arr.join(' ')
+    }
+
+    for (let j = index; j < size; j++) {
+      swap(arr, index, j)
+      yield* heapsUtil(index + 1)
+      swap(arr, index, j)
     }
   }
+}
+
+function swap(arr, i, j) {
+  let temp = arr[j]
+  arr[j] = arr[i]
+  arr[i] = temp
+  return arr
 }
 
 function showResult(hash, phrase) {
-  console.timeLog("found in")
-  console.log(`${hash} : ${phrase}`)
+  console.timeLog("found in", `\n\t ${hash} : ${phrase}`)
+  console.log(`---------------------------------------------------`)
 }
 
 main("wordlist", "poultry outwits ants")
