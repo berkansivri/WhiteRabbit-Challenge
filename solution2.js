@@ -43,19 +43,29 @@ function getCharsOfAnagram(anagram) {
   return Object.freeze(obj)
 }
 
+// function* getChars(word, chars) {
+//   for (let c of chars) {
+//     chars[c] = (chars[c] || 0) + 1
+//     yield chars
+//   }
+// }
+
 function isValidWord(word = "", chars = {}) {
   for (let c of word) {
     chars[c] = (chars[c] || 0) + 1
     if (!(chars[c] <= anagramChars[c]))
-      return
+      return false
   }
-  return chars
+  return true
 }
 
 function addCharCounts(word = "", chars = {}) {
-  let newChars = isValidWord(word, { ...chars })
-  if (newChars)
-    return Object.assign(chars, newChars)
+  let obj = { ...chars }
+  if (isValidWord(word, obj)) {
+    Object.assign(chars, obj)
+    return true
+  }
+  return false
 }
 
 function removeCharCounts(word = "", chars = {}) {
@@ -86,8 +96,7 @@ function findPhrases(wordList) {
 
 function* listFilter(wordList, wordCount) {
   const phrase = [],
-   used = [],
-  anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
+    anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
   let filteredArr,
     suitableLength,
     chars = {}
@@ -108,23 +117,13 @@ function* listFilter(wordList, wordCount) {
     } else {
 
       for (let i = 0; i < wordList.length; i++) {
-        if(!used[i]) {
-          if(phrase[index]) {
-            removeCharCounts(phrase[index], chars)
-            phrase[index] = ""
-          }
-          if (!addCharCounts(wordList[i], chars)) continue
-          if(index < wordCount - 3) {
-            used[i] = true
-          }
-          phrase[index] = wordList[i]
-          yield* fn(index + 1)
-          if(index < wordCount - 3) {
-            used[i] = false
-          }
-          // if(wordCount === 4 && i === wordList.length - 1) console.log("dsf");
-
+        if(phrase[index]) {
+          removeCharCounts(phrase[index], chars)
         }
+        phrase[index] = ""
+        if (!addCharCounts(wordList[i], chars)) continue
+        phrase[index] = wordList[i]
+        yield* fn(index + 1)
       }
     }
   } 
