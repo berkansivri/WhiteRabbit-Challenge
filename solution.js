@@ -10,7 +10,6 @@ const hashValues = [
   "e4820b45d2277f3844eac66c903e84be", // Easy
   "23170acc097c24edb98fc5488ab033fe", // Medium
   "665e5bcb0c20062fe8abaaf4628bb154", // Hard,
-  "96ec6e6479abf6421446b34b4954ff10" // dublicate 
 ]
 let anagramChars = {}
 
@@ -78,6 +77,7 @@ function findPhrases(wordList) {
       if (index > -1) {
         showResult(hashValues[index], phrase)
         hashValues.splice(index, 1)
+        if(hashValues.length === 0) break
       }
     }
     wordCount++
@@ -101,7 +101,7 @@ function* listFilter(wordList, wordCount) {
       if(filteredArr.length > 0) {
         for (let j = 0; j < filteredArr.length; j++) {
           phrase[index] = filteredArr[j]
-          return yield* permutation(phrase)
+          return yield* permutation2(phrase)
         }
       }
 
@@ -112,19 +112,20 @@ function* listFilter(wordList, wordCount) {
           if(phrase[index]) {
             removeCharCounts(phrase[index], chars)
             phrase[index] = ""
-          }
-          if (!addCharCounts(wordList[i], chars)) continue
-          if(index < wordCount - 3) {
             used[i] = true
           }
+          if (!addCharCounts(wordList[i], chars)) continue
+          // if(index < wordCount - 2) {
+          //   used[i] = true
+          // }
           phrase[index] = wordList[i]
           yield* fn(index + 1)
-          if(index < wordCount - 3) {
-            used[i] = false
+          // if(index < wordCount - 2) {
+            // used[i] = false
+            // }
+            // if(wordCount === 4 && i === wordList.length - 1) console.log("dsf");
           }
-          // if(wordCount === 4 && i === wordList.length - 1) console.log("dsf");
-
-        }
+          used[i] = false
       }
     }
   } 
@@ -132,26 +133,26 @@ function* listFilter(wordList, wordCount) {
 }
 
 
-// function* permutation(arr, size = arr.length) {
-//   const data = [],
-//     used = [],
-//     len = arr.length
-//   yield* perm(0)
+function* permutation2(arr, size = arr.length) {
+  const data = [],
+    used = [],
+    len = arr.length
+  yield* perm(0)
 
-//   function* perm(index) {
-//     if (index === size)
-//       return yield data.join(' ')
+  function* perm(index) {
+    if (index === size)
+      return yield data.join(' ')
 
-//     for (let i = 0; i < len; i++) {
-//       if (!used[i]) {
-//         used[i] = true
-//         data[index] = arr[i]
-//         yield* perm(index + 1)
-//         used[i] = false
-//       }
-//     }
-//   }
-// }
+    for (let i = 0; i < len; i++) {
+      if (!used[i]) {
+        used[i] = true
+        data[index] = arr[i]
+        yield* perm(index + 1)
+        used[i] = false
+      }
+    }
+  }
+}
 
 function* permutation(arr) {
   let size = arr.length
