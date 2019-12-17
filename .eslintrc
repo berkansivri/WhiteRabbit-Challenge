@@ -1,0 +1,25 @@
+{
+  "env": {
+    "commonjs": true,
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
+  "rules": {
+    "prettier/prettier": [
+      "error", {
+        "arrowParens": "always",
+        "printWidth": 100,
+        "singleQuote": true,
+        "tabWidth": 2,
+        "trailingComma": "es5",
+        "semi": false     // override trustpilot prettier rules just for this rule
+      }
+    ],
+    "no-console": 0,
+    "no-use-before-define": 0   // override to increase readability of my solution
+  },
+   "extends": "trustpilot"
+}
