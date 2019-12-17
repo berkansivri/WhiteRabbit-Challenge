@@ -7,13 +7,13 @@
 
 /**
  * --- Ideas about algorithm ---,
- * Keep the character set of anagraf of the phrase and hashes.
+ * Keep the character set of anagraf of the phrase.
  * Read the file (100k word) line by line and after checking strings with anagram of phrase populate an array.
- * Remove dublicates (1659 left) of the array and start to try crush hashes.
+ * Remove dublicates (1659 left) of the array and start to try crack hashes.
  * Start with iterate over wordlist to get a word and check conditions.
  *    Firstly check the length of the phrase (faster).
  *    Then check for the each character of the phrase with anagram characters.
- * If the phrase is valid, get permutation of the phrase and check for MD5 hash is valid.
+ * If the phrase is valid, get permutation of the phrase and check for each phrase MD5 hash is valid.
  * Until there is no hashes left, re-iterate over word list and increase the word limit for secret phrase to join them with space.
  */
 
@@ -52,8 +52,8 @@ const main = (fileName, anagram) => {
 }
 
 /**
- * @param {string} anagram / given anagram of the phrase.
- * @returns {object} / object of characters like map pairs.
+ * @param {string} anagram / given anagram of the phrase
+ * @returns {object} / object of characters like key-value pairs
  */
 function getCharsOfAnagram(anagram) {
   const obj = {}
@@ -66,17 +66,22 @@ function getCharsOfAnagram(anagram) {
 }
 
 /**
- * @param {string} word / word to check for whether matches characters with anagram characters.
- * @returns {object} TODO
+ * @param {string} word / word to check for whether matches characters with anagram characters
+ * @param {object} chars / all character set of current secret phrase candidate
+ * @returns {object} / if the word is valid return character set for concatenate phrase, otherwise return undefined (falsy)
  */
 function isValidWord(word = '', chars = {}) {
   for (const c of word) {
     chars[c] = (chars[c] || 0) + 1
+    // return undefined (falsy), any time encounter with unrelated character, for performance reasons
     if (!(chars[c] <= anagramChars[c])) return
   }
   return chars
 }
 
+/**
+ * @param {Array} wordList / filtered word list from the file
+ */
 function findPhrases(wordList) {
   let wordCount = 1
   while (hashValues.length > 0) {
@@ -98,20 +103,27 @@ function findPhrases(wordList) {
   }
 }
 
+/**
+ * @param {Array} wordList / filtered word list from the file
+ * @param {object} wordCount / length for current secret phrase
+ * @returns {function} / call for recursive generator function
+ */
 function* listFilter(wordList, wordCount) {
   const phrase = []
   const chars = {}
-  const anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
+  const anagramLength = Object.values(anagramChars).reduce((a, c) => a + c) // length of given anagram phrase
   let filteredWordList
   let suitableLength
 
   function* fn(index) {
     if (index === wordCount - 1) {
-      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0)
+      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0) // length necessary length to react anagram length
+      // filter the wordList to get all valid words
       filteredWordList = wordList.filter(
+        // firstly check for length for rapidity and then check for is all character set are same as given phrase
         (word) => word.length === suitableLength && isValidWord(word, { ...chars })
       )
-
+      // permutate all valid words with generator function and return to check hash
       for (const word of filteredWordList) {
         phrase[index] = word
         return yield* permutation(phrase)
@@ -119,10 +131,11 @@ function* listFilter(wordList, wordCount) {
     } else {
       for (const word of wordList) {
         if (phrase[index]) {
+          // each iteration sync character set of phrase with new words
           removeCharCounts(phrase[index], chars)
           phrase[index] = ''
         }
-
+        // continue instantly if the word character set is not valid with given secret phrase
         if (!addCharCounts(word, chars)) continue
 
         phrase[index] = word
@@ -133,25 +146,37 @@ function* listFilter(wordList, wordCount) {
   yield* fn(0)
 }
 
+/**
+ * @param {string} word / word to check for whether matches characters with anagram characters
+ * @param {object} chars / all character set of current secret phrase candidate
+ * @returns {object} / if the word is valid return combinated character set for phrase, otherwise return undefined (falsy)
+ */
 function addCharCounts(word = '', chars = {}) {
-  const newChars = isValidWord(word, { ...chars })
+  const newChars = isValidWord(word, { ...chars }) // sending hard copy of chars for prevent mutate if is not valid
   if (newChars) return Object.assign(chars, newChars)
 }
 
+/**
+ * @param {string} word / word to remove from secret phrase candidate character set
+ * @param {object} chars / all character set of current secret phrase candidate
+ */
 function removeCharCounts(word = '', chars = {}) {
   for (const c of word) {
-    if (chars[c]) chars[c]--
+    chars[c]--
   }
 }
 
-function* permutation(arr, size = arr.length) {
+/**
+ * @param {Array} arr / array of current secret phrase candidate words
+ */
+function* permutation(arr) {
   const data = []
   const used = []
   const len = arr.length
   yield* perm(0)
 
   function* perm(index) {
-    if (index === size) return yield data.join(' ')
+    if (index === len) return yield data.join(' ')
 
     for (let i = 0; i < len; i++) {
       if (!used[i]) {
@@ -164,6 +189,7 @@ function* permutation(arr, size = arr.length) {
   }
 }
 
+// shows pandora's box
 function showResult(hash, phrase) {
   console.timeLog('found in', `\n\t ${hash} : ${phrase}`)
   console.log(`---------------------------------------------------`)

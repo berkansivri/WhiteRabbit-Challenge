@@ -1,10 +1,5 @@
 //    Challenge link: https://followthewhiterabbit.trustpilot.com/cs/step3.html
 
-//                                                   Approximatly Found Times
-//    Easy secret phrase:   printout stout yawls          2.6   second
-//    Medium secret phrase: ty outlaws printouts          1.3   second
-//    Hard secret phrase:   wu lisp not statutory         3.20  minute
-
 const fs = require('fs')
 const readline = require('readline')
 const md5 = require('md5')
@@ -116,18 +111,18 @@ function addCharCounts(word = '', chars = {}) {
 
 function removeCharCounts(word = '', chars = {}) {
   for (const c of word) {
-    if (chars[c]) chars[c]--
+    chars[c]--
   }
 }
 
-function* permutation(arr, size = arr.length) {
+function* permutation(arr) {
   const data = []
   const used = []
   const len = arr.length
   yield* perm(0)
 
   function* perm(index) {
-    if (index === size) return yield data.join(' ')
+    if (index === len) return yield data.join(' ')
 
     for (let i = 0; i < len; i++) {
       if (!used[i]) {
