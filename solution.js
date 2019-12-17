@@ -1,7 +1,9 @@
 //    Challenge link: https://followthewhiterabbit.trustpilot.com/cs/step3.html
-//    Easy secret phrase: printout stout yawls
-//    Medium secret phrase: ty outlaws printouts
-//    Hard secret phrase: wu lisp not statutory
+
+//                                                   Approximatly Found Times
+//    Easy secret phrase: printout stout yawls          2.6   second      
+//    Medium secret phrase: ty outlaws printouts        1.3   second
+//    Hard secret phrase: wu lisp not statutory         3.20  minute
 
 
 const MD5 = require('md5')
@@ -23,7 +25,8 @@ const main = (fileName, anagram) => {
   anagramChars = getCharsOfAnagram(anagram)
   const foundWords = []
 
-  lineReader.on('line', line => {
+  lineReader
+    .on('line', line => {
       if (isValidWord(line))
         foundWords.push(line)
     })
@@ -51,6 +54,66 @@ function isValidWord(word = "", chars = {}) {
   return chars
 }
 
+function findPhrases(wordList) {
+  let wordCount = 1
+  while (hashValues.length > 0) {
+
+    console.log(`--------- Checking with ${wordCount} word combination --------`)
+    console.log(`===================================================`)
+
+    for (let phrase of listFilter(wordList, wordCount)) {
+      
+      const md5String = MD5(phrase).toString()
+      const index = hashValues.indexOf(md5String)
+
+      if (index > -1) {
+        showResult(hashValues[index], phrase)
+        hashValues.splice(index, 1)
+        if (hashValues.length === 0) break
+      }
+    }
+
+    wordCount++
+  }
+}
+
+function* listFilter(wordList, wordCount) {
+  const phrase = [],
+    anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
+  let filteredWordList,
+    suitableLength,
+    chars = {}
+
+  function* fn(index) {
+    if (index === wordCount - 1) {
+
+      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0)
+      filteredWordList = wordList.filter(word => word.length === suitableLength && isValidWord(word, { ...chars }))
+
+      for (let word of filteredWordList) {
+        phrase[index] = word
+        return yield* permutation(phrase)
+      }
+
+    } else {
+
+      for (let word of wordList) {
+        if (phrase[index]) {
+          removeCharCounts(phrase[index], chars)
+          phrase[index] = ""
+        }
+
+        if (!addCharCounts(word, chars))
+          continue
+
+        phrase[index] = word
+        yield* fn(index + 1)
+      }
+    }
+  }
+  yield* fn(0)
+}
+
 function addCharCounts(word = "", chars = {}) {
   let newChars = isValidWord(word, { ...chars })
   if (newChars)
@@ -63,77 +126,7 @@ function removeCharCounts(word = "", chars = {}) {
   }
 }
 
-function findPhrases(wordList) {
-  let wordCount = 1
-  while (hashValues.length > 0) {
-
-    console.log(`--------- Checking with ${wordCount} word combination --------`)
-    console.log(`===================================================`)
-    
-    for (let phrase of listFilter(wordList, wordCount)) {
-      const md5String = MD5(phrase).toString()
-      const index = hashValues.indexOf(md5String)
-
-      if (index > -1) {
-        showResult(hashValues[index], phrase)
-        hashValues.splice(index, 1)
-        if(hashValues.length === 0) break
-      }
-    }
-    wordCount++
-  }
-}
-
-function* listFilter(wordList, wordCount) {
-  const phrase = [],
-   used = [],
-  anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
-  let filteredArr,
-    suitableLength,
-    chars = {}
-
-  function* fn(index)   {
-    if (index === wordCount - 1) {
-
-      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0)
-      filteredArr = wordList.filter(word => word.length === suitableLength && isValidWord(word, { ...chars }))
-
-      if(filteredArr.length > 0) {
-        for (let j = 0; j < filteredArr.length; j++) {
-          phrase[index] = filteredArr[j]
-          return yield* permutation2(phrase)
-        }
-      }
-
-    } else {
-
-      for (let i = 0; i < wordList.length; i++) {
-        if(!used[i]) {
-          if(phrase[index]) {
-            removeCharCounts(phrase[index], chars)
-            phrase[index] = ""
-            used[i] = true
-          }
-          if (!addCharCounts(wordList[i], chars)) continue
-          // if(index < wordCount - 2) {
-          //   used[i] = true
-          // }
-          phrase[index] = wordList[i]
-          yield* fn(index + 1)
-          // if(index < wordCount - 2) {
-            // used[i] = false
-            // }
-            // if(wordCount === 4 && i === wordList.length - 1) console.log("dsf");
-          }
-          used[i] = false
-      }
-    }
-  } 
-  yield* fn(0)
-}
-
-
-function* permutation2(arr, size = arr.length) {
+function* permutation(arr, size = arr.length) {
   const data = [],
     used = [],
     len = arr.length
@@ -152,29 +145,6 @@ function* permutation2(arr, size = arr.length) {
       }
     }
   }
-}
-
-function* permutation(arr) {
-  let size = arr.length
-  yield* heapsUtil(0)
-  function* heapsUtil(index) {
-    if (index === size) {
-      return yield arr.join(' ')
-    }
-
-    for (let j = index; j < size; j++) {
-      swap(arr, index, j)
-      yield* heapsUtil(index + 1)
-      swap(arr, index, j)
-    }
-  }
-}
-
-function swap(arr, i, j) {
-  let temp = arr[j]
-  arr[j] = arr[i]
-  arr[i] = temp
-  return arr
 }
 
 function showResult(hash, phrase) {
