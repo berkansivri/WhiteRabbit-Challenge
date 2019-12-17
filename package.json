@@ -1,18 +1,16 @@
 {
-  "name": "trustpilot",
+  "name": "trustpilot-challenge",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node ./solution.js",
-    "lint": "eslint ./solution.js"
-  },
-  "keywords": [],
   "author": "berkansivri",
   "repository": {
     "url": "https://github.com/berkansivri/TrustPilot-Challenge"
   },
-  "license": "ISC",
+  "private": true,
+  "scripts": {
+    "start": "node solution.js",
+    "lint": "eslint solution.js"
+  },
+  "license": "MIT",
   "dependencies": {
     "md5": "^2.2.1"
   },
