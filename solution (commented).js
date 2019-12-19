@@ -112,14 +112,12 @@ function* listFilter(wordList, wordCount) {
   const phrase = []
   const chars = {}
   const anagramLength = Object.values(anagramChars).reduce((a, c) => a + c) // length of given anagram phrase
-  let filteredWordList
-  let suitableLength
 
   function* fn(index) {
     if (index === wordCount - 1) {
-      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0) // length necessary length to react anagram length
+      const suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0) // length necessary length to react anagram length
       // filter the wordList to get all valid words
-      filteredWordList = wordList.filter(
+      const filteredWordList = wordList.filter(
         // firstly check for length for rapidity and then check for is all character set are same as given phrase
         (word) => word.length === suitableLength && isValidWord(word, { ...chars })
       )

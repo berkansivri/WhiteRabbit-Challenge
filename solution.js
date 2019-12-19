@@ -73,13 +73,11 @@ function* listFilter(wordList, wordCount) {
   const phrase = []
   const chars = {}
   const anagramLength = Object.values(anagramChars).reduce((a, c) => a + c)
-  let filteredWordList
-  let suitableLength
 
   function* fn(index) {
     if (index === wordCount - 1) {
-      suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0)
-      filteredWordList = wordList.filter(
+      const suitableLength = anagramLength - Object.values(chars).reduce((a, c) => a + c, 0)
+      const filteredWordList = wordList.filter(
         (word) => word.length === suitableLength && isValidWord(word, { ...chars })
       )
 
