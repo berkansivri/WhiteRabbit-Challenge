@@ -1,6 +1,6 @@
 # Follow the White Rabbit
 
-<p>My approach on Trustpilot Challenge in JavaScript</p>
+<p>My approach on Trustpilot Challenge with JavaScript (Node.js)</p>
 <p>Challenge link: https://followthewhiterabbit.trustpilot.com/cs/step3.html</p>
 <hr>
 <div>
