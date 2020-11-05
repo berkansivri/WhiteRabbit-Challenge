@@ -14,12 +14,10 @@
         "printWidth": 100,
         "singleQuote": true,
         "tabWidth": 2,
-        "trailingComma": "es5",
-        "semi": false     // override trustpilot prettier rules just for this rule
+        "trailingComma": "es5"
       }
     ],
-    "no-console": 0,
-    "no-use-before-define": 0   // override to increase readability of my solution
+    "no-console": 0
   },
    "extends": "trustpilot"
 }
