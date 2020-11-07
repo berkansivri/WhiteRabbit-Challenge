@@ -1,9 +1,9 @@
 //    Challenge link: https://followthewhiterabbit.trustpilot.com/cs/step3.html
 
 //                                                      Approximately Found Times
-//    Easy secret phrase:     printout stout yawls            2.6   second
-//    Medium secret phrase:   ty outlaws printouts            1.3   second
-//    Hard secret phrase:     wu lisp not statutory           3.20  minute
+//    Easy secret phrase:     printout stout yawls            3.4   second
+//    Medium secret phrase:   ty outlaws printouts            1.5   second
+//    Hard secret phrase:     wu lisp not statutory           2.40  minute
 
 /**
  * --- Ideas about algorithm ---,
@@ -37,9 +37,7 @@ function* permutation(arr) {
   const [first, ...rest] = arr;
   for (const perm of permutation(rest)) {
     for (let i = 0; i < arr.length; i++) {
-      const start = perm.slice(0, i);
-      const rest = perm.slice(i);
-      yield [...start, first, ...rest];
+      yield [...perm.slice(0, i), first, ...perm.slice(i)];
     }
   }
 }
@@ -55,17 +53,17 @@ function showResult(hash, phrase) {
  * @param {object} wordCount / length for current secret phrase
  * @returns {function} / call for recursive generator function
  */
-function* listFilter(wordList, wordCount, anagramCharMap) {
+function* generatePhraseFromList(wordList, anagramCharMap, wordCount) {
   const phrase = [];
-  const charMap = new CharMap();
+  const phraseCharMap = new CharMap();
 
   function* fn(index) {
     if (index === wordCount - 1) {
-      const suitableLength = anagramCharMap.length - charMap.length; // length necessary length to reach total anagram length
+      const suitableLength = anagramCharMap.length - phraseCharMap.length; // length necessary length to reach total anagram length
       // filter the wordList to get all valid words
       const filteredWordList = wordList.filter(
         // firstly check for length for rapidity and then check for is all character set are same as given phrase
-        (word) => word.length === suitableLength && charMap.isValidAnagramForGiven(anagramCharMap, word)
+        (word) => word.length === suitableLength && phraseCharMap.isValidAnagramForGiven(anagramCharMap, word)
       );
       // permutate all valid words with generator function and yield to check hash
       for (const word of filteredWordList) {
@@ -76,12 +74,12 @@ function* listFilter(wordList, wordCount, anagramCharMap) {
       for (const word of wordList) {
         if (phrase[index]) {
           // each iteration sync character set of phrase with new words
-          charMap.removeChars(phrase[index]);
+          phraseCharMap.removeChars(phrase[index]);
           phrase[index] = '';
         }
-        // continue instantly if the word character set is not valid with given secret phrase
-        if (charMap.isValidAnagramForGiven(anagramCharMap, word)) {
-          charMap.addChars(word);
+        // if the current phrase candidate suitable for given anagram yield to the findPhrases function for check hash
+        if (phraseCharMap.isValidAnagramForGiven(anagramCharMap, word)) {
+          phraseCharMap.addChars(word);
           phrase[index] = word;
           yield* fn(index + 1);
         }
@@ -101,12 +99,12 @@ function findPhrases(wordList, anagramCharMap) {
     console.log(`--------- Checking with ${wordCount} word combination --------`);
     console.log(`===================================================`);
 
-    for (const phrase of listFilter(wordList, wordCount, anagramCharMap)) {
+    for (const phrase of generatePhraseFromList(wordList, anagramCharMap, wordCount)) {
       const hash = md5(phrase.join(' '));
       const index = hashValues.indexOf(hash);
 
       if (index > -1) {
-        showResult(hashValues[index], phrase);
+        showResult(hashValues[index], phrase.join(' '));
         hashValues.splice(index, 1);
         if (hashValues.length === 0) break;
       }
