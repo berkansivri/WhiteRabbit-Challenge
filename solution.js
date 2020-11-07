@@ -19,7 +19,7 @@
 
 const fs = require('fs');
 const readline = require('readline');
-const md5 = require('md5');
+const md5 = require('md5-jkmyers');
 const CharMap = require('./CharMap');
 
 const hashValues = [
@@ -28,77 +28,18 @@ const hashValues = [
   '665e5bcb0c20062fe8abaaf4628bb154', // Hard,
 ];
 
-function testAnagram(s1, s2) {
-  if (!s1 || !s2 || s1.length !== s2.length) {
-    return false;
-  }
-
-  const lS1 = s1.toLowerCase();
-  const lS2 = s2.toLowerCase();
-
-  if (lS1 === lS2) {
-    return false;
-  }
-
-  const rS1 = lS1
-    .split('')
-    .sort()
-    .join('');
-  const rS2 = lS2
-    .split('')
-    .sort()
-    .join('');
-
-  return rS1 === rS2;
-}
-
 /**
  * @param {Array} arr / array of current secret phrase candidate words
  */
 function* permutation(arr) {
-  if (!testAnagram(arr.join(''), 'poultryoutwitsants')) console.log('valid anagram - FALSE');
-  const data = [];
-  const used = [];
-  const len = arr.length;
+  if (arr.length === 1) return yield arr;
 
-  function* perm(index) {
-    if (index === len) return yield data;
-
-    for (let i = 0; i < len; i++) {
-      if (!used[i]) {
-        used[i] = true;
-        data[index] = arr[i];
-        yield* perm(index + 1);
-        used[i] = false;
-      }
-    }
-  }
-
-  yield* perm(0);
-}
-
-function* permute(arr) {
-  if (!testAnagram(arr.join(''), 'poultryoutwitsants')) console.log('valid anagram - FALSE');
-
-  const length = arr.length;
-  const c = Array(length).fill(0);
-  let i = 1;
-  let k;
-  let p;
-
-  yield arr.slice();
-  while (i < length) {
-    if (c[i] < i) {
-      k = i % 2 && c[i];
-      p = arr[i];
-      arr[i] = arr[k];
-      arr[k] = p;
-      ++c[i];
-      i = 1;
-      return yield arr.slice();
-    } else {
-      c[i] = 0;
-      ++i;
+  const [first, ...rest] = arr;
+  for (const perm of permutation(rest)) {
+    for (let i = 0; i < arr.length; i++) {
+      const start = perm.slice(0, i);
+      const rest = perm.slice(i);
+      yield [...start, first, ...rest];
     }
   }
 }
@@ -126,10 +67,10 @@ function* listFilter(wordList, wordCount, anagramCharMap) {
         // firstly check for length for rapidity and then check for is all character set are same as given phrase
         (word) => word.length === suitableLength && charMap.isValidAnagramForGiven(anagramCharMap, word)
       );
-      // permutate all valid words with generator function and return to check hash
+      // permutate all valid words with generator function and yield to check hash
       for (const word of filteredWordList) {
         phrase[index] = word;
-        return yield* permutation(phrase);
+        yield* permutation(phrase);
       }
     } else {
       for (const word of wordList) {
@@ -139,8 +80,6 @@ function* listFilter(wordList, wordCount, anagramCharMap) {
           phrase[index] = '';
         }
         // continue instantly if the word character set is not valid with given secret phrase
-        // if (!addCharCounts(word, chars)) continue;
-
         if (charMap.isValidAnagramForGiven(anagramCharMap, word)) {
           charMap.addChars(word);
           phrase[index] = word;
@@ -163,8 +102,8 @@ function findPhrases(wordList, anagramCharMap) {
     console.log(`===================================================`);
 
     for (const phrase of listFilter(wordList, wordCount, anagramCharMap)) {
-      const md5String = md5(phrase.join(' ')).toString();
-      const index = hashValues.indexOf(md5String);
+      const hash = md5(phrase.join(' '));
+      const index = hashValues.indexOf(hash);
 
       if (index > -1) {
         showResult(hashValues[index], phrase);
