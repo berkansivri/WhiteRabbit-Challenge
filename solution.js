@@ -22,12 +22,6 @@ const readline = require('readline');
 const md5 = require('md5-jkmyers');
 const CharMap = require('./CharMap');
 
-const hashValues = [
-  'e4820b45d2277f3844eac66c903e84be', // Easy
-  '23170acc097c24edb98fc5488ab033fe', // Medium
-  '665e5bcb0c20062fe8abaaf4628bb154', // Hard,
-];
-
 /**
  * @param {Array} arr / array of current secret phrase candidate words
  */
@@ -92,7 +86,7 @@ function* generatePhraseFromList(wordList, anagramCharMap, wordCount) {
 /**
  * @param {Array} wordList // filtered word list from the file
  */
-function findPhrases(wordList, anagramCharMap) {
+function findPhrases(wordList, anagramCharMap, hashValues) {
   let wordCount = 1;
 
   while (hashValues.length > 0) {
@@ -114,7 +108,7 @@ function findPhrases(wordList, anagramCharMap) {
   }
 }
 
-const main = (fileName, anagramOfThePhrase) => {
+const main = (fileName, anagramOfThePhrase, hashValues) => {
   console.time('found in');
 
   const anagramCharMap = new CharMap(anagramOfThePhrase.replace(/ /g, ''));
@@ -134,8 +128,14 @@ const main = (fileName, anagramOfThePhrase) => {
     })
     .on('close', () => {
       // remove dublicates from the array and send them to find function with character map of given anagram phrase
-      findPhrases([...new Set(foundWords)], anagramCharMap);
+      findPhrases([...new Set(foundWords)], anagramCharMap, hashValues);
     });
 };
 
-main('wordlist', 'poultry outwits ants');
+const hashValues = [
+  'e4820b45d2277f3844eac66c903e84be', // Easy
+  '23170acc097c24edb98fc5488ab033fe', // Medium
+  '665e5bcb0c20062fe8abaaf4628bb154', // Hard,
+];
+
+main('wordlist', 'poultry outwits ants', hashValues);
